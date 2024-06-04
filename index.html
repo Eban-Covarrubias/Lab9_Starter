@@ -5,6 +5,14 @@
   <meta charset="UTF-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://cdn.trackjs.com/agent/v3/latest/t.js"></script>
+  <script>
+    window.TrackJS && TrackJS.install({ 
+      token: "e684c36ca89a4c55b6cc4f746a1f2209"
+      // for more configuration options, see https://docs.trackjs.com
+    });
+  </script>
+                        
   <title>Lab 9</title>
 
   <style>
@@ -88,6 +96,22 @@
   </main>
 
   <script>
+
+    // Global error handler
+    window.onerror = function(message, source, lineno, colno, error) {
+      console.log('Global error caught: ', message);
+      // TrackJS will automatically capture this if installed
+      return true; // Prevents the browser from further handling the error
+    };
+
+    // Custom error class
+    class CalculationError extends Error {
+      constructor(message) {
+        super(message);
+        this.name = 'CalculationError';
+      }
+    }
+
     let form = document.querySelector('form');
     form.addEventListener('submit', e => {
       e.preventDefault();
@@ -95,13 +119,114 @@
       let firstNum = document.querySelector('#first-num').value;
       let secondNum = document.querySelector('#second-num').value;
       let operator = document.querySelector('#operator').value;
-      output.innerHTML = eval(`${firstNum} ${operator} ${secondNum}`);
+
+      try {
+        if (!firstNum || !secondNum) {
+          throw new CalculationError('Both numbers are required.');
+        }
+        if (isNaN(firstNum) || isNaN(secondNum)) {
+          throw new CalculationError('Inputs must be valid numbers.');
+        }
+
+        const num1 = parseFloat(firstNum);
+        const num2 = parseFloat(secondNum);
+        let result;
+
+        switch (operator) {
+          case '+':
+            result = num1 + num2;
+            break;
+          case '-':
+            result = num1 - num2;
+            break;
+          case '*':
+            result = num1 * num2;
+            break;
+          case '/':
+            if (num2 === 0) {
+              throw new CalculationError('Division by zero is not allowed.');
+            }
+            result = num1 / num2;
+            break;
+          default:
+            throw new CalculationError('Unsupported operator.');
+        }
+        output.innerHTML = eval(`${firstNum} ${operator} ${secondNum}`);
+
+        resultOutput.textContent = `Result: ${result}`;
+      } catch (error) {
+        if (error instanceof CalculationError) {
+          resultOutput.textContent = `Error: ${error.message}`;
+        } else {
+          console.error('Unexpected error:', error);
+          resultOutput.textContent = 'An unexpected error occurred.';
+        }
+      } finally {
+        console.log('Calculation attempt finished.');
+      }
     });
 
     let errorBtns = Array.from(document.querySelectorAll('#error-btns > button'));
 
     // Start your code here
-    // You may move this JS to another file if you wish
+    errorBtns.forEach(button => {
+      button.addEventListener('click', () => {
+        try{
+          switch (button.innerText) {
+            case 'Console Log':
+              console.log('Console Log button clicked');
+              break;
+            case 'Console Error':
+              console.error('Console Error button clicked');
+              break;
+            case 'Console Count':
+              console.count('Console Count button clicked');
+              break;
+            case 'Console Warn':
+              console.warn('Console Warn button clicked');
+              break;
+            case 'Console Assert':
+              console.assert(false, 'Console Assert button clicked');
+              break;
+            case 'Console Clear':
+              console.clear();
+              break;
+            case 'Console Dir':
+              console.dir(document.body);
+              break;
+            case 'Console dirxml':
+              console.dirxml(document);
+              break;
+            case 'Console Group Start':
+              console.group('Console Group Start');
+              break;
+            case 'Console Group End':
+              console.groupEnd();
+              break;
+            case 'Console Table':
+              console.table([{ name: "Apple", color: "red" }, { name: "Banana", color: "yellow" }]);
+              break;
+            case 'Start Timer':
+              console.time('Timer');
+              break;
+            case 'End Timer':
+              console.timeEnd('Timer');
+              break;
+            case 'Console Trace':
+              console.trace('Console Trace button clicked');
+              break;
+            case 'Trigger a Global Error':
+              // This will trigger a ReferenceError that will be caught by the global error handler
+              nonExistentFunction(); 
+              break;
+          }
+      } catch (error) {
+          console.error('Button click error:', error);
+        } finally {
+          console.log(`${button.innerText} button click handled`);
+        }
+      });
+    });
   </script>
 </body>
 
